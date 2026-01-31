@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+/* Modern Bakery Theme - Custom CSS Variables */
+@theme {
+  /* Cream/Flour tones for backgrounds */
+  --color-cream-50: #fdfcfa;
+  --color-cream-100: #f9f6f1;
+  --color-cream-200: #f3ede3;
+  --color-cream-300: #e8dfd0;
+  
+  /* Warm slate for text (Burnt Crust) */
+  --color-crust-900: #1c1917;
+  --color-crust-800: #292524;
+  --color-crust-700: #44403c;
+  --color-crust-600: #57534e;
+  --color-crust-500: #78716c;
+  --color-crust-400: #a8a29e;
+  
+  /* Golden Wheat accent */
+  --color-wheat-600: #ca8a04;
+  --color-wheat-500: #d97706;
+  --color-wheat-400: #f59e0b;
+  --color-wheat-300: #fbbf24;
+  
+  /* Alert/Info colors */
+  --color-alert-500: #ef4444;
+  --color-alert-600: #dc2626;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-400: #60a5fa;
+  
+  /* Font families */
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, monospace;
+  
+  /* Custom shadows */
+  --shadow-bread: 0 1px 3px 0 rgb(28 25 23 / 0.08), 0 1px 2px -1px rgb(28 25 23 / 0.06);
+  --shadow-bread-lg: 0 4px 6px -1px rgb(28 25 23 / 0.08), 0 2px 4px -2px rgb(28 25 23 / 0.06);
+}
+
+/* Base styles */
+html {
+  font-family: var(--font-sans);
+  background-color: var(--color-cream-50);
+  color: var(--color-crust-900);
+}
+
+/* Monospace numbers utility */
+.tabular-nums {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream-200);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-crust-400);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-crust-500);
+}
+
+/* Slider track styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-cream-300);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-wheat-500);
+  margin-top: -8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-cream-300);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-wheat-500);
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Focus states */
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--color-wheat-300);
+}
