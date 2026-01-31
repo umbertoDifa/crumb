@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Clock, ChevronDown, AlertCircle, Play, Pause } from 'lucide-react';
+import { Check, Clock, ChevronDown, Play, Pause, RotateCcw } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { useRecipeStore } from '../store/useRecipeStore';
 import type { Step } from '../types';
 
 interface StepCardProps {
@@ -13,19 +14,16 @@ interface StepCardProps {
   scheduledTime?: Date;
 }
 
-const categoryColors = {
-  prep: 'bg-purple-500',
-  mix: 'bg-blue-500',
-  bulk: 'bg-green-500',
-  shape: 'bg-yellow-500',
-  proof: 'bg-orange-500',
-  bake: 'bg-red-500',
-};
-
 export function StepCard({ step, index, isActive, isCompleted, onComplete, scheduledTime }: StepCardProps) {
   const [isExpanded, setIsExpanded] = useState(isActive);
-  const [timerSeconds, setTimerSeconds] = useState(step.duration ? step.duration * 60 : 0);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  
+  // Get timer state from store for persistence
+  const timerStates = useRecipeStore((state) => state.timerStates);
+  const updateTimerState = useRecipeStore((state) => state.updateTimerState);
+  
+  const timerState = timerStates[step.id];
+  const timerSeconds = timerState?.remainingSeconds ?? (step.duration ? step.duration * 60 : 0);
+  const isTimerRunning = timerState?.isRunning ?? false;
   
   // Format scheduled time
   const formatScheduledTime = (date?: Date) => {
@@ -62,15 +60,31 @@ export function StepCard({ step, index, isActive, isCompleted, onComplete, sched
     setIsExpanded(isActive);
   }, [isActive]);
   
+  // Timer countdown effect
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isTimerRunning && timerSeconds > 0) {
       interval = setInterval(() => {
-        setTimerSeconds((s) => s - 1);
+        updateTimerState(step.id, { 
+          remainingSeconds: timerSeconds - 1,
+        });
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isTimerRunning, timerSeconds]);
+  }, [isTimerRunning, timerSeconds, step.id, updateTimerState]);
+  
+  const toggleTimer = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateTimerState(step.id, { isRunning: !isTimerRunning });
+  }, [step.id, isTimerRunning, updateTimerState]);
+  
+  const resetTimer = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateTimerState(step.id, { 
+      remainingSeconds: (step.duration ?? 0) * 60,
+      isRunning: false,
+    });
+  }, [step.id, step.duration, updateTimerState]);
   
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -108,11 +122,6 @@ export function StepCard({ step, index, isActive, isCompleted, onComplete, sched
         {isCompleted ? <Check className="w-3 h-3" /> : index + 1}
       </div>
       
-      {/* Category indicator */}
-      <div className={cn(
-        'absolute right-4 top-4 w-2 h-2 rounded-full',
-        categoryColors[step.category]
-      )} />
       
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -120,28 +129,22 @@ export function StepCard({ step, index, isActive, isCompleted, onComplete, sched
       >
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h3 className={cn(
-                'font-semibold',
+                'font-semibold text-sm sm:text-base',
                 isCompleted ? 'text-crust-400 line-through' : 'text-crust-800'
               )}>
                 {step.title}
               </h3>
               {scheduledTime && (
                 <span className={cn(
-                  'tabular-nums text-sm font-medium shrink-0',
+                  'tabular-nums text-xs sm:text-sm font-medium shrink-0',
                   isCompleted ? 'text-crust-300' : 'text-crust-500'
                 )}>
                   {formatScheduledTime(scheduledTime)}
                 </span>
               )}
             </div>
-            {step.critical && (
-              <span className="inline-flex items-center gap-1 text-xs text-alert-500 mt-1">
-                <AlertCircle className="w-3 h-3" />
-                Critical Step
-              </span>
-            )}
           </div>
           
           <ChevronDown 
@@ -170,24 +173,34 @@ export function StepCard({ step, index, isActive, isCompleted, onComplete, sched
               {/* Timer */}
               {step.duration && isActive && (
                 <div className="flex items-center gap-3 p-3 bg-cream-200 rounded-lg">
-                  <Clock className="w-5 h-5 text-crust-500" />
-                  <span className="tabular-nums text-2xl font-bold text-crust-800">
-                    {formatTime(timerSeconds)}
+                  <Clock className="w-5 h-5 text-crust-500 shrink-0" />
+                  <span className={cn(
+                    'tabular-nums text-xl sm:text-2xl font-bold flex-1',
+                    timerSeconds === 0 ? 'text-green-600' : 'text-crust-800'
+                  )}>
+                    {timerSeconds === 0 ? 'Done!' : formatTime(timerSeconds)}
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsTimerRunning(!isTimerRunning);
-                    }}
-                    className={cn(
-                      'p-2 rounded-full transition-colors',
-                      isTimerRunning 
-                        ? 'bg-alert-500 text-white' 
-                        : 'bg-wheat-500 text-white'
+                  <div className="flex gap-2">
+                    {timerSeconds > 0 && (
+                      <button
+                        onClick={toggleTimer}
+                        className={cn(
+                          'p-2 rounded-full transition-colors touch-target',
+                          isTimerRunning 
+                            ? 'bg-alert-500 text-white' 
+                            : 'bg-wheat-500 text-white'
+                        )}
+                      >
+                        {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                      </button>
                     )}
-                  >
-                    {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </button>
+                    <button
+                      onClick={resetTimer}
+                      className="p-2 rounded-full bg-crust-400 text-white transition-colors touch-target"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               )}
               
@@ -195,7 +208,7 @@ export function StepCard({ step, index, isActive, isCompleted, onComplete, sched
               {isActive && (
                 <button
                   onClick={onComplete}
-                  className="w-full py-3 bg-wheat-500 hover:bg-wheat-600 text-white font-semibold rounded-lg transition-colors active:scale-[0.98]"
+                  className="w-full py-3 bg-wheat-500 hover:bg-wheat-600 text-white font-semibold rounded-lg transition-colors active:scale-[0.98] touch-target"
                 >
                   Mark Complete
                 </button>

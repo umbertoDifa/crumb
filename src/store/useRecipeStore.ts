@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AppState, RecipeInputs, Unit } from '../types';
+import type { AppState, RecipeInputs, Unit, TimerState } from '../types';
 import { calculateRecipe, generateSteps } from '../utils/breadMath';
 import { FLOUR_CONFIG, HYDRATION_CONFIG, TEMP_CONFIG, SPEED_CONFIG } from '../utils/constants';
 
@@ -25,6 +25,8 @@ export const useRecipeStore = create<AppState>()(
       steps: [],
       currentStepIndex: 0,
       bakeStartTime: null,
+      timerStates: {},
+      hasActiveBake: false,
 
       // Actions
       setView: (view) => set({ view }),
@@ -50,19 +52,73 @@ export const useRecipeStore = create<AppState>()(
         const output = calculateRecipe(inputs);
         const steps = generateSteps(inputs, output);
         
+        // Initialize timer states for all steps with duration
+        const timerStates: Record<string, TimerState> = {};
+        steps.forEach(step => {
+          if (step.duration) {
+            timerStates[step.id] = {
+              stepId: step.id,
+              remainingSeconds: step.duration * 60,
+              isRunning: false,
+              lastUpdated: Date.now(),
+            };
+          }
+        });
+        
         set({
           view: 'process',
           output,
           steps,
           currentStepIndex: 0,
           bakeStartTime: new Date(),
+          timerStates,
+          hasActiveBake: true,
         });
+        
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      
+      resumeBake: () => {
+        // Calculate elapsed time for any running timers
+        const { timerStates, steps } = get();
+        const now = Date.now();
+        
+        const updatedTimerStates: Record<string, TimerState> = {};
+        
+        Object.entries(timerStates).forEach(([stepId, state]) => {
+          if (state.isRunning) {
+            // Calculate how much time has passed since last update
+            const elapsedSeconds = Math.floor((now - state.lastUpdated) / 1000);
+            const newRemaining = Math.max(0, state.remainingSeconds - elapsedSeconds);
+            
+            updatedTimerStates[stepId] = {
+              ...state,
+              remainingSeconds: newRemaining,
+              lastUpdated: now,
+            };
+          } else {
+            updatedTimerStates[stepId] = state;
+          }
+        });
+        
+        // Recalculate step start times based on when bake started
+        set({
+          view: 'process',
+          timerStates: updatedTimerStates,
+          steps: steps, // Keep existing steps
+        });
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       },
       
       completeStep: () => {
         const { currentStepIndex, steps } = get();
         if (currentStepIndex < steps.length - 1) {
           set({ currentStepIndex: currentStepIndex + 1 });
+        } else {
+          // Bake complete
+          set({ hasActiveBake: false });
         }
       },
       
@@ -71,16 +127,55 @@ export const useRecipeStore = create<AppState>()(
           view: 'calculator',
           currentStepIndex: 0,
           bakeStartTime: null,
+          timerStates: {},
+          hasActiveBake: false,
         });
+      },
+      
+      pauseBake: () => {
+        // Go back to calculator without losing progress
+        set({ view: 'calculator' });
+      },
+      
+      updateTimerState: (stepId: string, state: Partial<TimerState>) => {
+        const { timerStates } = get();
+        const existingState = timerStates[stepId];
+        
+        if (existingState) {
+          set({
+            timerStates: {
+              ...timerStates,
+              [stepId]: {
+                ...existingState,
+                ...state,
+                lastUpdated: Date.now(),
+              },
+            },
+          });
+        }
       },
     }),
     {
       name: 'crumb-recipe-storage',
       partialize: (state) => ({
-        // Only persist these fields
+        // Persist these fields for cross-session continuity
         unit: state.unit,
         inputs: state.inputs,
+        // Bake progress persistence
+        view: state.view,
+        steps: state.steps,
+        currentStepIndex: state.currentStepIndex,
+        bakeStartTime: state.bakeStartTime,
+        timerStates: state.timerStates,
+        hasActiveBake: state.hasActiveBake,
+        output: state.output,
       }),
+      // Handle date serialization for bakeStartTime
+      onRehydrateStorage: () => (state) => {
+        if (state?.bakeStartTime) {
+          state.bakeStartTime = new Date(state.bakeStartTime);
+        }
+      },
     }
   )
 );

@@ -57,6 +57,14 @@ export interface Step {
   category: 'prep' | 'mix' | 'bulk' | 'shape' | 'proof' | 'bake';
 }
 
+// Timer state for tracking progress across sessions
+export interface TimerState {
+  stepId: string;
+  remainingSeconds: number;
+  isRunning: boolean;
+  lastUpdated: number; // timestamp for calculating elapsed time when returning
+}
+
 export interface AppState {
   // Current View
   view: 'calculator' | 'process';
@@ -72,6 +80,8 @@ export interface AppState {
   steps: Step[];
   currentStepIndex: number;
   bakeStartTime: Date | null;
+  timerStates: Record<string, TimerState>; // Track timer state by step ID
+  hasActiveBake: boolean;
   
   // Actions
   setView: (view: 'calculator' | 'process') => void;
@@ -81,4 +91,7 @@ export interface AppState {
   startBake: () => void;
   completeStep: () => void;
   resetBake: () => void;
+  pauseBake: () => void; // Go back to calculator without losing progress
+  resumeBake: () => void;
+  updateTimerState: (stepId: string, state: Partial<TimerState>) => void;
 }

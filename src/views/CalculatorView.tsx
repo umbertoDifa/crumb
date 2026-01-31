@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { Wheat, Hand, Cog, Refrigerator, Home, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Wheat, Hand, Cog, Refrigerator, Home, Clock, PlayCircle, X } from 'lucide-react';
 import { useRecipeStore } from '../store/useRecipeStore';
 import { MethodSelector } from '../components/MethodSelector';
 import { KnobSlider } from '../components/KnobSlider';
@@ -49,14 +49,54 @@ function getReadyByTime(totalMinutes: number): string {
 }
 
 export function CalculatorView() {
-  const { inputs, output, unit, setInputs, startBake } = useRecipeStore();
+  const { inputs, output, unit, setInputs, startBake, hasActiveBake, resumeBake, resetBake, currentStepIndex, steps } = useRecipeStore();
   
   const isIndirect = inputs.method !== 'DIRECT';
+  const currentStep = hasActiveBake && steps[currentStepIndex];
   
   return (
     <div className="min-h-screen bg-cream-50">
+      {/* Resume Banner - Shows when there's an active bake */}
+      <AnimatePresence>
+        {hasActiveBake && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="sticky top-0 z-50 bg-gradient-to-r from-wheat-500 to-wheat-600 text-white shadow-lg"
+          >
+            <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <PlayCircle className="w-5 h-5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">Bake in progress</p>
+                  <p className="text-xs text-white/80 truncate">
+                    Step {currentStepIndex + 1}: {currentStep ? currentStep.title : ''}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={resumeBake}
+                  className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Resume
+                </button>
+                <button
+                  onClick={resetBake}
+                  className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                  title="Start fresh"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Configuration Section */}
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-5 sm:p-6 space-y-5 sm:space-y-6">
         
         {/* Method Selection */}
         <motion.section
@@ -236,43 +276,43 @@ export function CalculatorView() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-crust-800 to-crust-900 p-5 text-cream-50"
+              className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-crust-800 to-crust-900 p-4 sm:p-5 text-cream-50"
             >
               <div className="absolute inset-0 opacity-10">
-                <div className="absolute -right-8 -top-8 w-32 h-32">
+                <div className="absolute -right-6 -top-6 w-24 h-24 sm:-right-8 sm:-top-8 sm:w-32 sm:h-32">
                   <Clock className="w-full h-full" />
                 </div>
               </div>
-              <div className="relative flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-cream-300 mb-1">Ready By</p>
+              <div className="relative flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-cream-300 mb-1">Ready By</p>
                   <motion.p
                     key={output.totalTime}
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-3xl font-bold"
+                    className="text-2xl sm:text-3xl font-bold truncate"
                   >
                     {getReadyByTime(output.totalTime)}
                   </motion.p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-cream-400">Total Time</p>
-                  <p className="tabular-nums text-xl font-semibold text-cream-200">
+                <div className="text-right shrink-0">
+                  <p className="text-xs sm:text-sm text-cream-400">Total Time</p>
+                  <p className="tabular-nums text-lg sm:text-xl font-semibold text-cream-200">
                     {formatDuration(output.totalTime)}
                   </p>
                 </div>
               </div>
             </motion.div>
             
-            {/* Key Timings - Compact Row */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Key Timings - Responsive Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
               {/* Water Temperature */}
               <TempWidget temp={output.calculatedWaterTemp} unit={unit} compact />
               
               {/* Bulk Time */}
               <div className="flex items-center justify-between rounded-xl border border-cream-300 bg-cream-100 p-3">
                 <span className="text-sm font-medium text-crust-600">Bulk</span>
-                <span className="tabular-nums text-xl font-bold text-crust-800">
+                <span className="tabular-nums text-lg sm:text-xl font-bold text-crust-800">
                   {formatDuration(output.estimatedBulkTime)}
                 </span>
               </div>
@@ -280,7 +320,7 @@ export function CalculatorView() {
               {/* Proof Time */}
               <div className="flex items-center justify-between rounded-xl border border-cream-300 bg-cream-100 p-3">
                 <span className="text-sm font-medium text-crust-600">Proof</span>
-                <span className="tabular-nums text-xl font-bold text-crust-800">
+                <span className="tabular-nums text-lg sm:text-xl font-bold text-crust-800">
                   {formatDuration(output.estimatedProofTime)}
                 </span>
               </div>

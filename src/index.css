@@ -128,3 +128,34 @@ input[type="range"]:focus {
 input[type="range"]:focus-visible::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px var(--color-wheat-300);
 }
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+  
+  /* Prevent horizontal overflow */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Ensure touch targets are large enough (44px minimum) */
+  button, 
+  input[type="range"], 
+  .touch-target {
+    min-height: 44px;
+  }
+  
+  /* Improve tap feedback */
+  button:active {
+    opacity: 0.8;
+  }
+}
+
+/* Small mobile (320px - Pixel-sized phones) */
+@media (max-width: 380px) {
+  html {
+    font-size: 13px;
+  }
+}
