@@ -658,13 +658,19 @@ describe('generateSteps', () => {
     expect(steps.some(s => s.category === 'bake')).toBe(true);
   });
 
-  it('includes preferment step for indirect methods', () => {
+  it('includes preferment steps for indirect methods', () => {
     const bigaInputs: RecipeInputs = { ...defaultInputs, method: 'BIGA' };
     const output = calculateRecipe(bigaInputs);
     const steps = generateSteps(bigaInputs, output);
     
-    expect(steps.some(s => s.title.includes('Biga'))).toBe(true);
+    // Should have both mix and ferment steps for preferment
+    expect(steps.some(s => s.title === 'Mix Biga')).toBe(true);
+    expect(steps.some(s => s.title === 'Ferment Biga')).toBe(true);
     expect(steps.some(s => s.category === 'prep')).toBe(true);
+    
+    // Ferment step should have duration matching prefermentTime
+    const fermentStep = steps.find(s => s.title === 'Ferment Biga');
+    expect(fermentStep?.duration).toBe(output.prefermentTime);
   });
 
   it('includes autolyse for high hydration', () => {

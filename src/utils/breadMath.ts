@@ -401,12 +401,24 @@ export function generateSteps(inputs: RecipeInputs, output: RecipeOutput): Step[
   if (isIndirect && output.preferment) {
     const prefermentName = method === 'BIGA' ? 'Biga' : 'Poolish';
     const prefermentHydration = method === 'BIGA' ? '50%' : '100%';
+    const fermentHours = Math.round(output.prefermentTime / 60);
     
+    // Step 1: Mix the preferment
     addStep(
-      `Prepare ${prefermentName}`,
-      `Mix ${output.preferment.flour}g flour with ${output.preferment.water}g water (${prefermentHydration} hydration) and ${output.preferment.yeast}g yeast. Cover and let ferment for 8-16 hours.`,
+      `Mix ${prefermentName}`,
+      `Combine ${output.preferment.flour}g flour with ${output.preferment.water}g water (${prefermentHydration} hydration) and ${output.preferment.yeast}g yeast. Mix until just combined.`,
       'prep',
-      true
+      false,
+      5 // 5 minutes to mix
+    );
+    
+    // Step 2: Let the preferment ferment (this is the long step)
+    addStep(
+      `Ferment ${prefermentName}`,
+      `Cover the ${prefermentName.toLowerCase()} and let it ferment at ${inputs.prefermentStorage === 'FRIDGE' ? 'refrigerator temperature' : 'room temperature'} for approximately ${fermentHours} hours until doubled and bubbly with a slightly domed surface.`,
+      'prep',
+      true,
+      output.prefermentTime // Duration in minutes
     );
   }
   
