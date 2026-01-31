@@ -305,9 +305,26 @@ export function CalculatorView() {
             </motion.div>
             
             {/* Key Timings - Responsive Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div className={`grid grid-cols-1 gap-2 sm:gap-3 ${isIndirect ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
               {/* Water Temperature */}
               <TempWidget temp={output.calculatedWaterTemp} unit={unit} compact />
+              
+              {/* Preferment Time (only for Biga/Poolish) */}
+              {isIndirect && output.prefermentTime > 0 && (
+                <div className="flex items-center justify-between rounded-xl border border-wheat-400 bg-wheat-50 p-3">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-wheat-700">
+                      {inputs.method === 'BIGA' ? 'Biga' : 'Poolish'}
+                    </span>
+                    <span className="text-xs text-wheat-600">
+                      {inputs.prefermentStorage === 'FRIDGE' ? '❄️ Fridge' : '🏠 Room'}
+                    </span>
+                  </div>
+                  <span className="tabular-nums text-lg sm:text-xl font-bold text-wheat-800">
+                    {formatDuration(output.prefermentTime)}
+                  </span>
+                </div>
+              )}
               
               {/* Bulk Time */}
               <div className="flex items-center justify-between rounded-xl border border-cream-300 bg-cream-100 p-3">
