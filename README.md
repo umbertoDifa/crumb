@@ -4,7 +4,7 @@ A beautiful, mobile-first bread baking calculator that uses professional Baker's
 
 **Live Demo:** [bread-virid-one.vercel.app](https://bread-virid-one.vercel.app)
 
-![Crumb Screenshot](https://via.placeholder.com/800x400?text=Crumb+Bread+Calculator)
+![Crumb Screenshot](docs/screenshot.png)
 
 ## Features
 

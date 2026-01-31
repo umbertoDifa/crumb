@@ -514,20 +514,13 @@ export function generateSteps(inputs: RecipeInputs, output: RecipeOutput): Step[
       foldInterval
     );
   } else {
-    // Standard bulk
+    // Standard bulk with stretch & fold included in description
     addStep(
       'Bulk Fermentation',
-      `Cover dough and let rise at room temperature for approximately ${bulkTime} minutes until doubled in size.`,
+      `Cover dough and let rise at room temperature for approximately ${bulkTime} minutes until doubled in size. Optionally perform one set of stretch and folds halfway through for additional strength.`,
       'bulk',
       true,
       bulkTime
-    );
-    
-    addStep(
-      'Stretch & Fold (Optional)',
-      'Perform one set of stretch and folds halfway through bulk if desired for additional strength.',
-      'bulk',
-      false
     );
   }
   
