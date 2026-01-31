@@ -24,7 +24,7 @@ export function ProcessView() {
     .reduce((acc, step) => acc + (step.duration || 5), 0);
   
   // Calculate start time for each step (cumulative from now)
-  const stepStartTimes = steps.reduce<Date[]>((times, step, index) => {
+  const stepStartTimes = steps.reduce<Date[]>((times, _step, index) => {
     if (index === 0) {
       times.push(new Date()); // First step starts now
     } else {
